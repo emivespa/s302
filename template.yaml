@@ -1,0 +1,42 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Parameters:
+  BucketName:
+    Type: String
+  LinksFileKey:
+    Type: String
+Resources:
+  ShortenerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: index.handler
+      Runtime: nodejs14.x
+      Environment:
+        Variables:
+          BUCKET_NAME: !Ref BucketName
+          LINKS_FILE_KEY: !Ref LinksFileKey
+      Events:
+        GetAlias:
+          Type: Api
+          Properties:
+            Path: "/{alias}"
+            Method: get
+
+  ApiGateway:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Prod
+      DefinitionBody:
+        swagger: "2.0"
+        info:
+          title: "Shortener API"
+        paths:
+          /{alias}:
+            get:
+              x-amazon-apigateway-integration:
+                uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ShortenerFunction.Arn}/invocations"
+                passthroughBehavior: "when_no_match"
+                httpMethod: "POST"
+                type: "aws_proxy"
+
