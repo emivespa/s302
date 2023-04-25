@@ -1,9 +1,9 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: 'AWS::Serverless-2016-10-31'
 Parameters:
-  BucketName:
+  Bucket:
     Type: String
-  LinksFileKey:
+  Key:
     Type: String
 Resources:
   ShortenerFunction:
@@ -12,13 +12,20 @@ Resources:
       CodeUri: .
       Handler: index.handler
       Runtime: nodejs14.x
+      MemorySize: 128
+      Timeout: 10
       Environment:
         Variables:
-          BUCKET_NAME: !Ref BucketName
-          LINKS_FILE_KEY: !Ref LinksFileKey
+          BUCKET: !Ref Bucket
+          KEY: !Ref Key
       Events:
         GetAlias:
           Type: Api
           Properties:
-            Path: "/goto/{alias}"
+            Path: "/{alias}"
             Method: get
+
+Outputs:
+  ApiUrl:
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
+    Description: "The URL of the deployed API Gateway endpoint"
